@@ -1,0 +1,22 @@
+# phpmyadmin folder
+/public/uploads/
+/public/phpmyadmin/
+
+# Environment file
+.env
+
+# Composer dependencies
+/vendor/
+
+# User uploads
+/uploads/
+  
+# Writable directories
+/writable/logs/
+/writable/cache/
+/writable/session/
+/writable/uploads/
+/writable/debugbar/
+
+# Database configuration (sensitive)
+app/Config/Database.php
