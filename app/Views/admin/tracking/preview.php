@@ -326,7 +326,7 @@
                resolve();
             } else {
                const script = document.createElement('script');
-               script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAfNAxmkEDXAr3-uxC86gjU5lfkrPcb6Ic&libraries=places`;
+               script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB5JXg6FAxRZ5Asf7Yj8isqEay5ogDxkzc&libraries=places`;
                script.onload = resolve;
                script.onerror = reject;
                document.head.appendChild(script);
