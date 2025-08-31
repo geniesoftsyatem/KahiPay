@@ -308,4 +308,97 @@ class AttendanceController extends BaseController
             'results' => $attendanceRecords,
         ]);
     }
+/**
+ * Get attendance summary (total present, absent, working hours) within date range (multi-year supported)
+ * GET /api/attendance/summary?employee_id=123&start_date=2024-12-15&end_date=2025-01-15
+ */
+public function getAttendanceSummary()
+{
+    $employeeId = $this->request->getGet('employee_id');
+    $startDate  = $this->request->getGet('start_date');
+    $endDate    = $this->request->getGet('end_date');
+
+    if (!$employeeId || !$startDate || !$endDate) {
+        return $this->failValidationErrors("employee_id, start_date, and end_date are required.");
+    }
+
+    // Ensure end_date is not in the future
+    $today = date("Y-m-d");
+    if ($endDate > $today) {
+        return $this->failValidationErrors("end_date cannot be greater than today's date ($today).");
+    }
+
+    // Ensure start_date <= end_date
+    if ($startDate > $endDate) {
+        return $this->failValidationErrors("start_date cannot be greater than end_date.");
+    }
+
+    // Validate employee exists
+    $employee = $this->employeeModel->find($employeeId);
+    if (!$employee) {
+        return $this->failNotFound("Employee not found.");
+    }
+
+    $db = \Config\Database::connect();
+
+    // Determine year range
+    $startYear = (int) date("Y", strtotime($startDate));
+    $endYear   = (int) date("Y", strtotime($endDate));
+
+    // Initialize counters
+    $presentDays = 0;
+    $absentDays  = 0;
+    $totalHours  = 0;
+
+    // Loop through each year in the range
+    for ($year = $startYear; $year <= $endYear; $year++) {
+        $tableName = "employee_attendance_summary_" . $year;
+
+        if (!$db->tableExists($tableName)) {
+            continue; // skip missing tables gracefully
+        }
+
+        // Adjust date range for current year
+        $yearStart = ($year === $startYear) ? $startDate : "$year-01-01";
+        $yearEnd   = ($year === $endYear) ? $endDate : "$year-12-31";
+
+        // Fetch attendance records for this year
+        $records = $db->table($tableName)
+            ->where('employee_id', $employeeId)
+            ->where('attendance_date >=', $yearStart)
+            ->where('attendance_date <=', $yearEnd)
+            ->get()
+            ->getResultArray();
+
+        // Aggregate data
+        foreach ($records as $record) {
+            $status = strtolower($record['status']);
+
+            if (in_array($status, ['present', 'late'])) {
+                $presentDays += 1;
+            } elseif ($status === 'half day') {
+                $presentDays += 0.5;
+            } elseif ($status === 'absent') {
+                $absentDays += 1;
+            }
+
+            $totalHours += (float) $record['total_hours'];
+        }
+    }
+
+    return $this->respond([
+        'status'   => true,
+        'employee' => [
+            'employee_id' => $employee['employee_id'],
+            'name'        => $employee['first_name'] . ' ' . $employee['last_name'],
+            'designation' => $employee['designation'],
+        ],
+        'results' => [
+            'total_present_days'  => $presentDays,
+            'total_absent_days'   => $absentDays,
+            'total_working_hours' => $totalHours
+        ]
+    ]);
+}
+
 }

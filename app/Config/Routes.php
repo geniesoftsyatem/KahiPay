@@ -168,10 +168,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\API'], function ($routes)
     $routes->get('payslip/serve/(:num)/(:num)/(:num)', 'PayslipController::servePayslip/$1/$2/$3');
 
     $routes->get('attendance', 'AttendanceController::getAttendance');
+    $routes->get('attendance/summary', 'AttendanceController::getAttendanceSummary');
     $routes->get('employee-id-card', 'EmployeeController::getEmployeeIdCard');
     $routes->get('payslip/status', 'PayslipController::getPayslipStatus');
     $routes->post('payslip/generate', 'PayslipController::generatePayslip');
     $routes->get('employee-profile', 'EmployeeController::getProfileDetails');
+    $routes->get('employees/geo-tracking', 'EmployeeController::getGeoTrackingStatus');
+    $routes->post('employees/geo-tracking', 'EmployeeController::updateGeoTrackingStatus');
+    $routes->get('employees/juniors', 'EmployeeController::getJuniorsEmployees');
 
     $routes->get('employee/get-status', 'EmployeeController::getEmployeeOnlineStatus');
     $routes->post('employee/update-status', 'EmployeeController::updateEmployeeOnlineStatus');

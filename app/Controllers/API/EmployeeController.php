@@ -22,6 +22,9 @@ class EmployeeController extends BaseController
         $this->employeeModel = new EmployeeModel();
     }
 
+    /**
+     * Register new employee or get if exists
+     */
     public function registerOrGetEmployee()
     {
         $rules = [
@@ -52,7 +55,7 @@ class EmployeeController extends BaseController
                 'success' => true,
                 'results' => [
                     'employee_id' => $employee['employee_id'],
-                    'message' => 'roEmployee already exists'
+                    'message' => 'Employee already exists'
                 ]
             ]);
         }
@@ -61,7 +64,8 @@ class EmployeeController extends BaseController
         $newId = $this->employeeModel->insert([
             'employee_code' => $username,
             'email'    => $email,
-            'phone'   => $mobile
+            'phone'   => $mobile,
+            'geo_tracking' => 1 // default enabled
         ]);
 
         if ($newId) {
@@ -79,7 +83,6 @@ class EmployeeController extends BaseController
 
     /**
      * Get employee online status
-     * GET /api/employees/status?employee_id=123
      */
     public function getEmployeeOnlineStatus()
     {
@@ -109,7 +112,6 @@ class EmployeeController extends BaseController
 
     /**
      * Update employee online status
-     * POST /api/employees/status
      */
     public function updateEmployeeOnlineStatus()
     {
@@ -124,16 +126,13 @@ class EmployeeController extends BaseController
             return $this->failValidationErrors('Online status (true/false) is required');
         }
 
-        // Convert string "true"/"false" to 1/0
         $onlineStatus = (strtolower($isOnline) === 'true' || $isOnline === '1') ? 1 : 0;
 
-        // Update payload
         $updateData = [
             'is_online' => $onlineStatus,
             'last_active' => date('Y-m-d H:i:s')
         ];
 
-        // Perform update
         try {
             $updated = $this->employeeModel->update($employeeId, $updateData);
 
@@ -157,30 +156,91 @@ class EmployeeController extends BaseController
     }
 
     /**
-     * Get employee profile details
-     * GET /api/employee-profile
+     * Get employee geo-tracking status
      */
-
-    public function getProfileDetails()
+    public function getGeoTrackingStatus()
     {
-        // Get employee ID from the request
         $employeeId = $this->request->getGet('employee_id');
 
-        // Fetch employee details
+        if (empty($employeeId) || !is_numeric($employeeId)) {
+            return $this->failValidationErrors('Employee ID is required and must be numeric');
+        }
+
+        $employee = $this->employeeModel->find($employeeId);
+
+        if (!$employee) {
+            return $this->failNotFound('Employee not found');
+        }
+
+        return $this->respond([
+            'status' => 200,
+            'error' => null,
+            'message' => 'Employee geo-tracking status retrieved successfully',
+            'data' => [
+                'employee_id' => $employeeId,
+                'geo_tracking' => $employee['geo_tracking'] == 1 ? true : false
+            ]
+        ]);
+    }
+
+    /**
+     * Update employee geo-tracking status
+     */
+    public function updateGeoTrackingStatus()
+    {
+        $employeeId = $this->request->getVar('employee_id');
+        $geoTracking = $this->request->getVar('geo_tracking');
+
+        if (empty($employeeId) || !is_numeric($employeeId)) {
+            return $this->failValidationErrors('Employee ID is required and must be numeric');
+        }
+
+        if (!isset($geoTracking)) {
+            return $this->failValidationErrors('Geo-tracking status (true/false) is required');
+        }
+
+        $geoTrackingStatus = (strtolower($geoTracking) === 'true' || $geoTracking === '1') ? 1 : 0;
+
+        try {
+            $updated = $this->employeeModel->update($employeeId, ['geo_tracking' => $geoTrackingStatus]);
+
+            if (!$updated) {
+                return $this->fail('Failed to update geo-tracking status', 500);
+            }
+        } catch (\Exception $e) {
+            return $this->failServerError('Exception: ' . $e->getMessage());
+        }
+
+        return $this->respond([
+            'status' => 200,
+            'error' => null,
+            'message' => 'Employee geo-tracking status updated successfully',
+            'data' => [
+                'employee_id' => $employeeId,
+                'geo_tracking' => $geoTrackingStatus
+            ]
+        ]);
+    }
+
+    /**
+     * Get employee profile details
+     */
+    public function getProfileDetails()
+    {
+        $employeeId = $this->request->getGet('employee_id');
+
         $employee = $this->employeeModel->find($employeeId);
 
         if (!$employee) {
             return $this->failNotFound("Employee not found.");
         }
 
-        // Fetch company details
         $company = $this->companyModel->find($employee['company_id']);
 
         if (!$company) {
             return $this->failNotFound("Company not found for this employee.");
         }
 
-        // Prepare response
         $response = [
             'status' => true,
             'base_url'  => base_url() . 'uploads/employees/',
@@ -197,6 +257,7 @@ class EmployeeController extends BaseController
                 'company_name'    => $company['company_name'],
                 'company_address' => $company['address'],
                 'company_logo'    => $company['logo'],
+                'geo_tracking'    => $employee['geo_tracking'],
                 'created_at'      => $employee['created_at'],
                 'updated_at'      => $employee['updated_at'],
             ]
@@ -206,8 +267,7 @@ class EmployeeController extends BaseController
     }
 
     /**
-     * Get employee details
-     * GET /api/employees/:code/details
+     * Get employee details by code
      */
     public function getEmployeeByCode()
     {
@@ -227,6 +287,7 @@ class EmployeeController extends BaseController
             e.designation,
             e.phone,
             e.email,
+            e.geo_tracking,
             e.created_at,
             e.updated_at,
             c.company_name,
@@ -254,8 +315,7 @@ class EmployeeController extends BaseController
     }
 
     /**
-     * Get employee details
-     * GET /api/employee-id-card
+     * Get employee ID card details
      */
     public function getEmployeeIdCard()
     {
@@ -266,13 +326,11 @@ class EmployeeController extends BaseController
             return $this->failNotFound("Employee not found.");
         }
 
-        // Fetch the company using the employee's company_id
         $company = $this->companyModel->find($employee['company_id']);
         if (!$company) {
             return $this->failNotFound("Company information not found for this employee.");
         }
 
-        // Generate employee image URL
         $imageUrl = null;
         if (!empty($employee['profile_image'])) {
             $imageUrl = base_url('uploads/employees/' . $employee['profile_image']);
@@ -285,7 +343,8 @@ class EmployeeController extends BaseController
                 'designation' => $employee['designation'],
                 'profile_image_url' => $imageUrl,
                 'company_name' => $company['company_name'],
-                'company_address' => $company['address']
+                'company_address' => $company['address'],
+                'geo_tracking' => $employee['geo_tracking']
             ]
         ];
 
@@ -293,8 +352,7 @@ class EmployeeController extends BaseController
     }
 
     /**
-     * Get direct reporting employees (juniors) for a given manager.
-     * Endpoint: GET /api/employees/juniors?employee_id=123
+     * Get juniors (direct reports)
      */
     public function getJuniorsEmployees()
     {
@@ -313,6 +371,7 @@ class EmployeeController extends BaseController
                 employees.phone,
                 employees.email,
                 employees.designation,
+                employees.geo_tracking,
                 companies.company_name,
                 companies.address AS company_address
             ')

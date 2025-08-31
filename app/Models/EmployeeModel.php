@@ -26,6 +26,7 @@ class EmployeeModel extends Model
         'status',
         'is_online',
         'last_active',
+       'geo_tracking',
         'created_by',
         'created_at',
         'updated_at'
