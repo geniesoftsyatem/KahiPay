@@ -64,8 +64,8 @@ class AuthController extends BaseController
             }
 
             // Step 4: Generate OTP for validation
-            $otp = rand(100000, 999999);
-            // $otp = 111111;
+            // $otp = rand(100000, 999999);
+            $otp = 111111;
 
             date_default_timezone_set('Asia/Kolkata');
             $otpExpiry = date('Y-m-d H:i:s', time() + 300);
