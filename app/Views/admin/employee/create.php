@@ -117,6 +117,27 @@ $userType = strtolower($session->get('user_type'));
         margin-top: 10px;
     }
 
+    .form-check-input {
+        width: 3em;
+        height: 1.5em;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .form-switch .form-check-input {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e");
+        background-position: left center;
+        border-radius: 2em;
+        transition: background-position .15s ease-in-out;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+        background-position: right center;
+    }
+
     @media (max-width: 768px) {
         .card-body {
             padding: 1.5rem;
@@ -327,6 +348,18 @@ $userType = strtolower($session->get('user_type'));
                                     <label for="address" class="form-label fw-bold">Address</label>
                                     <textarea class="form-control" id="address" name="address"
                                         placeholder="Enter employee address" rows="3"><?= esc($employee['address'] ?? ''); ?></textarea>
+                                </div>
+
+                                <div class="col-12 mt-3">
+                                    <div class="form-check form-switch">
+                                        <!-- Hidden input to ensure geo_tracking is sent even when unchecked -->
+                                        <input type="hidden" name="geo_tracking" value="0">
+                                        <input class="form-check-input" type="checkbox" id="geo_tracking" name="geo_tracking" value="1" 
+                                            <?= (!isset($employee['geo_tracking']) || $employee['geo_tracking'] == 1) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label fw-bold" for="geo_tracking">
+                                            Enable Location Tracking
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 

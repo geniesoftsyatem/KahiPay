@@ -197,6 +197,7 @@ class EmployeeController extends BaseController
             'gender' => $this->request->getPost('gender'),
             'status' => $this->request->getPost('status'),
             'joining_date' => $this->request->getPost('joining_date'),
+            'geo_tracking' => (int)$this->request->getPost('geo_tracking'),
         ];
 
         // Handle profile image upload
