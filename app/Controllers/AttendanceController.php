@@ -7,8 +7,6 @@ use Config\Database;
 use App\Models\EmployeeModel;
 use App\Libraries\Pagination;
 use App\Models\AttendanceModel;
-use App\Libraries\TablesManager;
-
 class AttendanceController extends BaseController
 {
     protected $tablesManager;
@@ -61,33 +59,74 @@ class AttendanceController extends BaseController
             $data['searchArray']['to_date']   = date('Y-m-d');
         }
 
+        $fromDate = $data['searchArray']['from_date'];
+        $toDate   = $data['searchArray']['to_date'];
+
         // Pagination setup
-        $page  = (int) $this->request->getGet('page') ?: 1;
-        $limit = 20;
+        $page       = (int) $this->request->getGet('page') ?: 1;
+        $limit      = 20;
         $startLimit = ($page - 1) * $limit;
 
-        // Total count
-        $totalRecord = $this->attendanceModel
-            ->useMonthlyTable() // switch table dynamically
-            ->where('employee_id', $employeeId)
-            ->where('punch_date >=', $data['searchArray']['from_date'])
-            ->where('punch_date <=', $data['searchArray']['to_date'])
-            ->countAllResults(false); // don't reset query
+        // Build month period
+        $period = new \DatePeriod(
+            new \DateTime(date('Y-m-01', strtotime($fromDate))),
+            new \DateInterval('P1M'),
+            (new \DateTime(date('Y-m-01', strtotime($toDate))))->modify('+1 month')
+        );
 
-        // Pagination
+        $allResults  = [];
+        $totalRecord = 0;
+
+        // Loop each month table
+        foreach ($period as $dt) {
+            $tableName = "employee_attendance_" . $dt->format("Y_m");
+
+            $db = \Config\Database::connect();
+            if (!$db->tableExists($tableName)) {
+                continue; // skip missing table
+            }
+            // Count
+            $count = $this->attendanceModel
+                ->setTable($tableName)
+                ->where('employee_id', $employeeId)
+                ->where('punch_date >=', $fromDate)
+                ->where('punch_date <=', $toDate)
+                ->countAllResults(false);
+
+            $totalRecord += $count;
+
+            // Fetch rows (get all, we'll slice for pagination later)
+            if ($count > 0) {
+                $rows = $this->attendanceModel
+                    ->setTable($tableName)
+                    ->where('employee_id', $employeeId)
+                    ->where('punch_date >=', $fromDate)
+                    ->where('punch_date <=', $toDate)
+                    ->orderBy('punch_date', 'DESC')
+                    ->findAll();
+
+                $allResults = array_merge($allResults, $rows);
+            }
+        }
+
+        // Sort combined results by punch_date DESC
+        usort($allResults, function ($a, $b) {
+            return strtotime($b['punch_date']) <=> strtotime($a['punch_date']);
+        });
+
+        // Apply pagination manually on merged results
+        $pagedResults = array_slice($allResults, $startLimit, $limit);
+
+        // Pagination data
         $data['reverse']    = $totalRecord - $startLimit;
         $data['startLimit'] = $startLimit;
         $data['pagination'] = $customPagination->getPaginate($totalRecord, $page, $limit);
 
-        // Fetch paginated results
-        $data['results'] = $this->attendanceModel
-            ->useMonthlyTable()
-            ->where('employee_id', $employeeId)
-            ->where('punch_date >=', $data['searchArray']['from_date'])
-            ->where('punch_date <=', $data['searchArray']['to_date'])
-            ->orderBy('punch_date', 'DESC')
-            ->findAll($limit, $startLimit);
+        // Final results for the view
+        $data['results'] = $pagedResults;
 
         return view('admin/attendance/index', $data);
     }
+
+
 }
