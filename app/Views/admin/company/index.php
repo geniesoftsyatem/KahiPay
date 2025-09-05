@@ -127,6 +127,8 @@
                                             <th>Company Code</th>
                                             <th>Email</th>
                                             <th>Phone</th>
+                                            <th>In Time</th>
+                                            <th>Out Time</th>
                                             <th>Status</th>
                                             <th>Created At</th>
                                             <th data-sortable="false">Actions</th>
@@ -150,6 +152,8 @@
                                                 <td><?= htmlspecialchars($item->company_code ?? 'N/A') ?></td>
                                                 <td><?= htmlspecialchars($item->email ?? 'N/A') ?></td>
                                                 <td><?= htmlspecialchars($item->phone ?? 'N/A') ?></td>
+                                                <td><?= htmlspecialchars($item->in_time ?? 'N/A') ?></td>
+                                                <td><?= htmlspecialchars($item->out_time ?? 'N/A') ?></td>
                                                 <td><span class="status-badge status-<?= $statusClass ?>"><?= $statusText ?></span></td>
                                                 <td><?= !empty($item->created_at) ? date('M d, Y', strtotime($item->created_at)) : 'N/A' ?></td>
                                                 <td class="text-center">

@@ -222,6 +222,24 @@
                                 </div>
 
                                 <div class="col-md-6">
+                                    <label for="in_time" class="form-label fw-bold">In Time</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                        <input type="time" class="form-control" id="in_time" name="in_time" 
+                                        value="<?= esc($company['in_time'] ?? ''); ?>" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="out_time" class="form-label fw-bold">Out Time</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                        <input type="time" class="form-control" id="out_time" name="out_time" 
+                                        value="<?= esc($company['out_time'] ?? ''); ?>" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
                                     <label for="status" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
                                     <select class="form-select" id="comStatus" name="status" required>
                                         <option value="Active" <?= (isset($company['status']) && $company['status'] == 'Active') ? 'selected' : ''; ?>>Active</option>

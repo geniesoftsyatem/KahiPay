@@ -191,6 +191,14 @@
                                           <th>Address</th>
                                           <td><?= nl2br(esc($company['address'] ?? 'N/A')) ?></td>
                                        </tr>
+                                         <tr>
+                                          <th>In Time</th>
+                                          <td><?= esc($company['in_time'] ?? 'N/A') ?></td>
+                                       </tr>
+                                       <tr>
+                                          <th>Out Time</th>
+                                          <td><?= nl2br(esc($company['out_time'] ?? 'N/A')) ?></td>
+                                       </tr>
                                     </tbody>
                                  </table>
                               </div>
@@ -214,7 +222,7 @@
                                        </tr>
                                        <tr>
                                           <th>Last Updated</th>
-                                          <td><?= !empty($company['updated_at']) ? date('F j, Y, g:i a', strtotime($company['updated_at'])) : 'Not updated yet' ?></td>
+                                          <td><?= !empty($company['in_time']) ? date('F j, Y, g:i a', strtotime($company['in_time'])) : 'Not updated yet' ?></td>
                                        </tr>
                                     </tbody>
                                  </table>
