@@ -15,6 +15,8 @@ class CompanyModel extends Model
         'email',
         'phone',
         'website',
+        'in_time',
+        'out_time',
         'industry',
         'address',
         'pan',
