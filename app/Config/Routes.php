@@ -130,6 +130,7 @@ $routes->group('settings', ['filter' => 'auth'], function ($routes) {
 
     $routes->get('company-info', 'CompanyInformationController::index');
     $routes->post('company/save', 'CompanyInformationController::save');
+    
 });
 
 $routes->get('feedback', 'CommonController::feedbacks');
