@@ -57,6 +57,34 @@
                 </div>
             </div>
         </form>
+                <?php if (!empty($summary)) : ?>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5>Total Present Days</h5>
+                                <h3 class="text-success"><?= esc($summary['present_days']) ?></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5>Total Absent Days</h5>
+                                <h3 class="text-danger"><?= esc($summary['absent_days']) ?></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5>Total Working Hours</h5>
+                                <h3 class="text-primary"><?= esc($summary['total_hours']) ?> hrs</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
         <!-- Attendance Table -->
         <div class="row">
@@ -74,6 +102,7 @@
                                             <th class="text-center">Punch In</th>
                                             <th class="text-center">Punch Out</th>
                                             <th class="text-center">Total Hours</th>
+                                            
                                         </tr>
                                     </thead>
                                     <tbody>

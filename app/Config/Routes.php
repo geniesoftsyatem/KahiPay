@@ -97,7 +97,7 @@ $routes->group('employees', ['filter' => 'auth'], function ($routes) {
     $routes->get('get-employees-by-company/(:num)', 'EmployeeController::getEmployeesByCompany/$1');
 });
 
-$routes->group('employee-attendance', ['filter' => 'auth'], function ($routes) {
+    $routes->group('employee-attendance', ['filter' => 'auth'], function ($routes) {
     $routes->get('/', 'AttendanceController::index');
     $routes->get('view/(:num)', 'AttendanceController::getEmployeeAttendance/$1');
 });
