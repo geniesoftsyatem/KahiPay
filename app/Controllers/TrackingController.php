@@ -11,6 +11,51 @@ use App\Models\ReportingManagerModel;
 
 class TrackingController extends BaseController
 {
+    // ...existing code...
+    /**
+     * Get employee route (lat/lng list) for a given date
+     */
+    public function getEmployeeRoute()
+    {
+        $employeeId = $this->request->getGet('employee_id');
+        $fromDate = $this->request->getGet('from_date');
+
+        if (empty($employeeId) || empty($fromDate)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Missing employee_id or from_date']);
+        }
+
+        // Determine the correct monthly table (use from_date for table name)
+        $table = 'employee_locations_' . date('Y_m', strtotime($fromDate));
+        $sql = "SELECT * FROM $table WHERE employee_id = ? AND DATE(timestamp) = ? ORDER BY timestamp ASC";
+        $query = $this->db->query($sql, [
+            $employeeId,
+            $fromDate
+        ]);
+        $locations = $query->getResult();
+
+        // Log SQL and employee ID
+        error_log('Route SQL: ' . $sql . ' [' . $employeeId . ', ' . $fromDate . ']');
+        error_log('Route Employee ID: ' . $employeeId);
+
+        // Prepare lat/lng list
+        $route = [];
+        foreach ($locations as $loc) {
+            if (!empty($loc->latitude) && !empty($loc->longitude)) {
+                $route[] = [
+                    'lat' => (float)$loc->latitude,
+                    'lng' => (float)$loc->longitude,
+                    'timestamp' => $loc->timestamp
+                ];
+            }
+        }
+
+        $response = ['success' => true, 'route' => $route];
+        // If no route data, include SQL in response for debugging
+        if (count($route) === 0) {
+            $response['sql'] = $sql;
+        }
+        return $this->response->setJSON($response);
+    }
     protected $db;
     protected $session;
     protected $companyModel;

@@ -103,6 +103,7 @@ $routes->group('employee-attendance', ['filter' => 'auth'], function ($routes) {
 });
 
 $routes->get('employee-locations', 'TrackingController::index');
+$routes->get('employee-locations/get-employee-route', 'TrackingController::getEmployeeRoute');
 $routes->get('employee-locations/view/(:num)', 'TrackingController::getEmployeeLocation/$1');
 $routes->post('employee-locations/delete', 'TrackingController::delete');
 

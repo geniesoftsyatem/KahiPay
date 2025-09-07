@@ -40,6 +40,11 @@
             <div class="col-xl-12">
                <div class="card">
                   <div class="card-body">
+                  <div class="mb-3">
+                     <button type="button" class="btn btn-info" id="showRouteTopBtn">
+                        <i class="fas fa-route"></i> Show Route
+                     </button>
+                  </div>
                      <div class="row g-3">
                         <div class="col-lg-4">
                            <label class="form-label">Search</label>
@@ -119,7 +124,9 @@
                                        <button type="button" class="btn btn-primary view-location" data-lat="<?= $item->latitude ?>" data-lng="<?= $item->longitude ?>" data-name="<?= esc($employee['first_name'] . ' ' . $employee['last_name']) ?>" title="View on Map">
                                           <i class="fas fa-map-marker-alt"></i>
                                        </button>
-
+                                       <button type="button" class="btn btn-info show-route-map" data-id="<?= $item->employee_id ?>" data-date="<?= !empty($item->timestamp) ? date('Y-m-d', strtotime($item->timestamp)) : '' ?>" title="Show Route">
+                                          <i class="fas fa-route"></i>
+                                       </button>
                                        <?php if (session('user_type') === 'admin'): ?>
                                           <button type="button" class="btn btn-danger delete-tracking" data-id="<?= $item->employee_id ?>" data-name="<?= esc($employee['first_name'] . ' ' . $employee['last_name']) ?>" title="Delete Record">
                                              <i class="fas fa-trash"></i>
@@ -221,6 +228,172 @@
 
 <script>
    $(document).ready(function() {
+         // Top Show Route button click
+         $('#showRouteTopBtn').on('click', function() {
+            const employeeId = <?= isset($employee['employee_id']) ? $employee['employee_id'] : 'null' ?>;
+            const fromDate = $('input[name="from_date"]').val();
+            const toDate = $('input[name="to_date"]').val();
+            if (!employeeId || !fromDate || !toDate) {
+               alert('Employee ID, From Date, or To Date missing');
+               return;
+            }
+
+            // Fetch route data via AJAX for the date range
+            $.ajax({
+               url: '<?= site_url('employee-locations/get-employee-route') ?>',
+               type: 'GET',
+               data: { employee_id: employeeId, from_date: fromDate, to_date: toDate },
+               dataType: 'json',
+               success: function(response) {
+                     if (response.success && response.route.length > 0) {
+                        showRouteOnMap(response.route);
+                     } else {
+                        let msg = 'No route data found for this employee in selected date range.';
+                        msg += '\nEmployee ID: ' + employeeId;
+                        msg += '\nFrom: ' + fromDate + '\nTo: ' + toDate;
+                        if (response.sql) {
+                           msg += '\nSQL: ' + response.sql;
+                        }
+                        alert(msg);
+                     }
+               },
+               error: function(xhr, status, error) {
+                  let msg = 'Error fetching route data.';
+                  if (xhr.responseText) {
+                     msg += '\n' + xhr.responseText;
+                  }
+                  alert(msg);
+               }
+            });
+         });
+         // Show Route Map button click (per-row, use same logic as top button)
+         $('.show-route-map').on('click', function() {
+            const employeeId = $(this).data('id');
+            // Use global date range from search form
+            const fromDate = $('input[name="from_date"]').val();
+            const toDate = $('input[name="to_date"]').val();
+            if (!employeeId || !fromDate || !toDate) {
+               alert('Employee ID, From Date, or To Date missing');
+               return;
+            }
+
+            // Fetch route data via AJAX for the date range
+            $.ajax({
+               url: '<?= site_url('employee-locations/get-employee-route') ?>',
+               type: 'GET',
+               data: { employee_id: employeeId, from_date: fromDate, to_date: toDate },
+               dataType: 'json',
+               success: function(response) {
+                     if (response.success && response.route.length > 0) {
+                        showRouteOnMap(response.route);
+                     } else {
+                        let msg = 'No route data found for this employee in selected date range.';
+                        msg += '\nEmployee ID: ' + employeeId;
+                        msg += '\nFrom: ' + fromDate + '\nTo: ' + toDate;
+                        if (response.sql) {
+                           msg += '\nSQL: ' + response.sql;
+                        }
+                        alert(msg);
+                     }
+               },
+               error: function(xhr, status, error) {
+                  let msg = 'Error fetching route data.';
+                  if (xhr.responseText) {
+                     msg += '\n' + xhr.responseText;
+                  }
+                  alert(msg);
+               }
+            });
+         });
+
+         // Function to show route on Google Map
+         function showRouteOnMap(route) {
+            // Create modal if not exists
+            if ($('#routeMapModal').length === 0) {
+               $('body').append(`
+                  <div class="modal fade" id="routeMapModal" tabindex="-1" role="dialog" aria-hidden="true">
+                     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <h5 class="modal-title">Employee Route</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                           </div>
+                           <div class="modal-body p-0">
+                              <div id="routeMap" style="height: 400px; width: 100%;"></div>
+                           </div>
+                           <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               `);
+            }
+
+            $('#routeMapModal').modal('show');
+            $('#routeMap').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x"></i><p>Loading map...</p></div>');
+
+            // Use same Google Maps loading logic and key as index.php
+            function loadGoogleMaps() {
+               return new Promise((resolve, reject) => {
+                  if (typeof google === 'object' && typeof google.maps === 'object') {
+                     resolve();
+                  } else {
+                     const script = document.createElement('script');
+                     script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB5JXg6FAxRZ5Asf7Yj8isqEay5ogDxkzc&libraries=places';
+                     script.onload = resolve;
+                     script.onerror = reject;
+                     document.head.appendChild(script);
+                  }
+               });
+            }
+
+            loadGoogleMaps().then(() => {
+               const mapElement = document.getElementById('routeMap');
+               const pathCoords = route.map(p => ({ lat: p.lat, lng: p.lng }));
+               const center = pathCoords.length > 0 ? pathCoords[0] : { lat: 0, lng: 0 };
+               const map = new google.maps.Map(mapElement, {
+                  center: center,
+                  zoom: 15,
+                  mapTypeId: google.maps.MapTypeId.ROADMAP,
+                  streetViewControl: true,
+                  mapTypeControl: true,
+                  fullscreenControl: true
+               });
+
+               // Draw polyline
+               const routeLine = new google.maps.Polyline({
+                  path: pathCoords,
+                  geodesic: true,
+                  strokeColor: '#007bff',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 4
+               });
+               routeLine.setMap(map);
+
+               // Add markers for start and end
+               if (pathCoords.length > 0) {
+                  new google.maps.Marker({
+                     position: pathCoords[0],
+                     map: map,
+                     label: 'Start',
+                     icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+                  });
+                  new google.maps.Marker({
+                     position: pathCoords[pathCoords.length - 1],
+                     map: map,
+                     label: 'End',
+                     icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                  });
+               }
+            }).catch((error) => {
+               let msg = 'Failed to load map. Please try again later.';
+               if (error && error.message) {
+                  msg += '\n' + error.message;
+               }
+               $('#routeMap').html('<div class="alert alert-danger m-3">' + msg + '</div>');
+            });
+         }
 
       $('#datatable').DataTable({
          dom: 'Bfrtip',
