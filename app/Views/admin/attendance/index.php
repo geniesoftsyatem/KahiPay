@@ -58,6 +58,20 @@
             </div>
         </form>
 
+        <!-- Present/Absent Summary -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="alert alert-success">
+                    <strong>Total Present:</strong> <?= esc($totalPresent) ?>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-danger">
+                    <strong>Total Absent:</strong> <?= esc($totalAbsent) ?>
+                </div>
+            </div>
+        </div>
+
         <!-- Attendance Table -->
         <div class="row">
             <div class="col-xl-12">

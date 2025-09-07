@@ -7,6 +7,7 @@ use Config\Database;
 use App\Models\EmployeeModel;
 use App\Libraries\Pagination;
 use App\Models\AttendanceModel;
+use App\Libraries\TablesManager;
 class AttendanceController extends BaseController
 {
     protected $tablesManager;
@@ -117,6 +118,27 @@ class AttendanceController extends BaseController
         // Apply pagination manually on merged results
         $pagedResults = array_slice($allResults, $startLimit, $limit);
 
+            // Calculate total present and absent based on total hours per date
+            $dateHours = [];
+            foreach ($allResults as $row) {
+                $date = $row['punch_date'];
+                $hours = isset($row['total_hours']) ? (float)$row['total_hours'] : 0.0;
+                if (!isset($dateHours[$date])) {
+                    $dateHours[$date] = 0.0;
+                }
+                $dateHours[$date] += $hours;
+            }
+
+            $totalPresent = 0;
+            $totalAbsent = 0;
+            foreach ($dateHours as $date => $hours) {
+                if ($hours > 1.0) {
+                    $totalPresent++;
+                } else {
+                    $totalAbsent++;
+                }
+            }
+
         // Pagination data
         $data['reverse']    = $totalRecord - $startLimit;
         $data['startLimit'] = $startLimit;
@@ -124,6 +146,10 @@ class AttendanceController extends BaseController
 
         // Final results for the view
         $data['results'] = $pagedResults;
+
+            // Pass present/absent counts to view
+            $data['totalPresent'] = $totalPresent;
+            $data['totalAbsent'] = $totalAbsent;
 
         return view('admin/attendance/index', $data);
     }
