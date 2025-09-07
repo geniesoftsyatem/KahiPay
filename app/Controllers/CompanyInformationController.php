@@ -40,8 +40,8 @@ class CompanyInformationController extends BaseController
             $data['logo'] = $newName;
 
             // Delete old image if updating
-            if ($company['id']) {
-                $oldImage = $companyModel->find($company['id'])['logo'];
+            if ($company && isset($company['id'])) {
+                $oldImage = $companyModel->find($company['id'])['logo'] ?? null;
                 if ($oldImage && file_exists(FCPATH  . 'uploads/company/' . $oldImage)) {
                     unlink(FCPATH  . 'uploads/company/' . $oldImage);
                 }
