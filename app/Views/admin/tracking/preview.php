@@ -266,30 +266,28 @@
                }
             });
          });
-         // Show Route Map button click (per-row, use same logic as top button)
+         // Show Route Map button click (per-row, use item's date)
          $('.show-route-map').on('click', function() {
             const employeeId = $(this).data('id');
-            // Use global date range from search form
-            const fromDate = $('input[name="from_date"]').val();
-            const toDate = $('input[name="to_date"]').val();
-            if (!employeeId || !fromDate || !toDate) {
-               alert('Employee ID, From Date, or To Date missing');
+            const itemDate = $(this).data('date');
+            if (!employeeId || !itemDate) {
+               alert('Employee ID or date missing');
                return;
             }
 
-            // Fetch route data via AJAX for the date range
+            // Fetch route data via AJAX for the item's date
             $.ajax({
                url: '<?= site_url('employee-locations/get-employee-route') ?>',
                type: 'GET',
-               data: { employee_id: employeeId, from_date: fromDate, to_date: toDate },
+               data: { employee_id: employeeId, from_date: itemDate },
                dataType: 'json',
                success: function(response) {
                      if (response.success && response.route.length > 0) {
                         showRouteOnMap(response.route);
                      } else {
-                        let msg = 'No route data found for this employee in selected date range.';
+                        let msg = 'No route data found for this employee on selected date.';
                         msg += '\nEmployee ID: ' + employeeId;
-                        msg += '\nFrom: ' + fromDate + '\nTo: ' + toDate;
+                        msg += '\nDate: ' + itemDate;
                         if (response.sql) {
                            msg += '\nSQL: ' + response.sql;
                         }
