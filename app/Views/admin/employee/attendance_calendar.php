@@ -22,6 +22,17 @@ $statusClasses = [
 // Use controller-summarized data (already keyed by day number)
 $attendanceMap = $attendanceData;
 ?>
+<?php
+$totalHours = 0;
+if (isset($attendanceData) && is_array($attendanceData)) {
+    foreach ($attendanceData as $day => $data) {
+        $totalHours += $data['total_hours'] ?? 0;
+    }
+}
+?>
+<div class="mb-3">
+    <strong>Total Working Hours:</strong> <?= number_format($totalHours, 2) ?>
+</div>
 
 <style>
     .attendance-calendar td {

@@ -480,7 +480,7 @@
                 $('#calendarContainer').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
             },
             success: function(response) {
-                error_log(response);
+                console.log('Attendance Calendar Response:', response);
                 $('#calendarContainer').html(response);
             },
             error: function() {
